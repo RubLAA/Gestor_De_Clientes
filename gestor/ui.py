@@ -1,4 +1,4 @@
-from tkinter import Tk, Frame, CENTER, NO, Scrollbar, RIGHT, Y, Button, Toplevel, Label, Entry, DISABLED
+from tkinter import Tk, Frame, CENTER, NO, Scrollbar, RIGHT, Y, Button, Toplevel, Label, Entry, DISABLED, NORMAL
 from tkinter.messagebox import askokcancel, WARNING
 from tkinter import ttk
 import database as db
@@ -21,6 +21,7 @@ class MainWindow(Tk, CenterWidgetMixin):
         self.title('Gestor de clientes') 
         self.build() 
         self.center()
+        
 
     def build(self): 
         # Top Frame 
@@ -106,6 +107,9 @@ class CreateClientWindow(Toplevel, CenterWidgetMixin):
         Label(frame, text="Apellido (2 a 30 chars)").grid(row=0, 
         column=2) 
 
+        # Estado inicial de las validaciones (DNI, Nombre, Apellido)
+        self.validaciones = [False, False, False]
+
         # Entries and validations 
         dni = Entry(frame) 
         dni.grid(row=1, column=0) 
@@ -116,6 +120,12 @@ class CreateClientWindow(Toplevel, CenterWidgetMixin):
         apellido = Entry(frame) 
         apellido.grid(row=1, column=2) 
         apellido.bind("<KeyRelease>", lambda ev: self.validate(ev, 2))
+
+        # Exportar botón "Crear" para modificarlo
+        self.crear = crear
+        self.dni = dni 
+        self.nombre = nombre 
+        self.apellido = apellido 
 
         # Bottom frame 
         frame = Frame(self) 
@@ -137,12 +147,22 @@ class CreateClientWindow(Toplevel, CenterWidgetMixin):
     def close(self): 
         self.destroy() 
         self.update() 
-    
+
     def validate(self, event, index): 
         valor = event.widget.get() 
-        # Validar como dni si es el primer campo o textual para los otros dos 
+        # Validar el dni si es el primer campo o textual para los otros dos 
         valido = helpers.dni_valido(valor, db.Clientes.lista) if index == 0 else (valor.isalpha() and len(valor) >= 2 and len(valor) <= 30) 
-        event.widget.configure({"bg": "Green" if valido else "Red"})
+        event.widget.configure({"bg": "Green" if valido else "Red"}) 
+        # Cambiar estado del botón en base a las validaciones 
+        self.validaciones[index] = valido 
+        self.crear.config(state=NORMAL if self.validaciones == [1, 1, 1] else DISABLED)
+    
+    def create_client(self): 
+        self.master.treeview.insert( 
+            parent='', index='end', iid=self.dni.get(), 
+            values=(self.dni.get(), self.nombre.get(), 
+        self.apellido.get())) 
+        self.close()
 
 if __name__ == "__main__":
     app = MainWindow()
