@@ -28,10 +28,10 @@ class Clientes:
                 return cliente 
     
     @staticmethod 
-    def crear(dni, nombre, apellido): 
-        cliente = Cliente(dni, nombre, apellido) 
-        Clientes.lista.append(cliente) 
-        Clientes.guardar() # new 
+    def crear(dni, nombre, apellido):
+        cliente = Cliente(dni, nombre, apellido)
+        Clientes.lista.append(cliente)
+        Clientes.guardar()  # <-- Guarda en el CSV
         return cliente
     
     @staticmethod 

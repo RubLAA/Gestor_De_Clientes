@@ -123,24 +123,23 @@ class CreateClientWindow(Toplevel, CenterWidgetMixin):
 
         # Botones (¡definir "crear" antes de asignarlo!)
         crear = Button(frame, text="Crear", command=self.create_client) 
-        crear.configure(state=DISABLED) 
+        crear.configure(state=NORMAL) 
         crear.grid(row=0, column=0) 
         Button(frame, text="Cancelar", command=self.close).grid(row=0, column=1) 
 
         # Estado de validaciones y exportar botón
         self.validaciones = [False, False, False] 
-        self.crear = crear  # <-- Asignar después de definir "crear"
+        self.crear = crear
 
     def dni_valido(dni, lista_clientes):
-        # Validar formato: 2 dígitos + 1 letra mayúscula (ej: "12A")
+        # Formato: 00A
         if not re.match(r'^\d{2}[A-Z]$', dni):
             return False
         
-        # Validar que el DNI no exista en la lista
+        # DNI único
         for cliente in lista_clientes:
             if cliente.dni == dni:
                 return False
-        
         return True
 
     def validate(self, event, index): 
@@ -170,13 +169,12 @@ class CreateClientWindow(Toplevel, CenterWidgetMixin):
         # Añadir a la base de datos 
         db.Clientes.crear(dni, nombre, apellido)
         
-        # Actualizar Treeview 
+        # Actualizar Treeview (forzar refresco)
         self.master.treeview.insert(
-            "", 
-            "end", 
-            iid=dni, 
+            "", "end", iid=dni, 
             values=(dni, nombre, apellido)
-            )
+        ) 
+        self.master.treeview.update_idletasks()
         self.close()
 
 if __name__ == "__main__":
