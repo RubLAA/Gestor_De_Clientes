@@ -1,5 +1,5 @@
 import csv
-import config
+from . import config
 
 class Cliente: 
  

@@ -1,9 +1,9 @@
 import copy 
 import unittest 
-import database as db 
-import helpers
+from gestor import database as db 
+from gestor import helpers
 import csv
-import config
+from gestor import config
  
  
 class TestDatabase(unittest.TestCase): 
