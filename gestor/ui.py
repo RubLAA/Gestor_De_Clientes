@@ -3,6 +3,7 @@ from tkinter.messagebox import askokcancel, WARNING
 from tkinter import ttk
 import database as db
 import helpers
+import re
 
 class CenterWidgetMixin: 
     def center(self):  # Quita la coma extra
@@ -92,7 +93,6 @@ class CreateClientWindow(Toplevel, CenterWidgetMixin):
         self.center() 
         self.transient(parent)
         self.grab_set()
-        
 
     def build(self): 
         # Top frame 
@@ -100,68 +100,83 @@ class CreateClientWindow(Toplevel, CenterWidgetMixin):
         frame.pack(padx=20, pady=10) 
 
         # Labels 
-        Label(frame, text="DNI (2 ints y 1 upper char)").grid(row=0, 
-        column=0) 
-        Label(frame, text="Nombre (2 a 30 chars)").grid(row=0, 
-        column=1) 
-        Label(frame, text="Apellido (2 a 30 chars)").grid(row=0, 
-        column=2) 
+        Label(frame, text="DNI (2 números y 1 letra)").grid(row=0, column=0) 
+        Label(frame, text="Nombre (2 a 30 chars)").grid(row=0, column=1) 
+        Label(frame, text="Apellido (2 a 30 chars)").grid(row=0, column=2) 
 
-        # Estado inicial de las validaciones (DNI, Nombre, Apellido)
-        self.validaciones = [False, False, False]
-
-        # Entries and validations 
-        dni = Entry(frame) 
-        dni.grid(row=1, column=0) 
-        dni.bind("<KeyRelease>", lambda ev: self.validate(ev, 0)) 
-        nombre = Entry(frame) 
-        nombre.grid(row=1, column=1) 
-        nombre.bind("<KeyRelease>", lambda ev: self.validate(ev, 1)) 
-        apellido = Entry(frame) 
-        apellido.grid(row=1, column=2) 
-        apellido.bind("<KeyRelease>", lambda ev: self.validate(ev, 2))
-
-        # Exportar botón "Crear" para modificarlo
-        self.crear = crear
-        self.dni = dni 
-        self.nombre = nombre 
-        self.apellido = apellido 
+        # Entries (¡convertirlos en atributos de clase!)
+        self.dni = Entry(frame) 
+        self.dni.grid(row=1, column=0) 
+        self.dni.bind("<KeyRelease>", lambda ev: self.validate(ev, 0)) 
+        
+        self.nombre = Entry(frame) 
+        self.nombre.grid(row=1, column=1) 
+        self.nombre.bind("<KeyRelease>", lambda ev: self.validate(ev, 1)) 
+        
+        self.apellido = Entry(frame) 
+        self.apellido.grid(row=1, column=2) 
+        self.apellido.bind("<KeyRelease>", lambda ev: self.validate(ev, 2)) 
 
         # Bottom frame 
         frame = Frame(self) 
         frame.pack(pady=10) 
 
-        # Buttons 
-        crear = Button(frame, text="Crear", 
-        command=self.create_client) 
+        # Botones (¡definir "crear" antes de asignarlo!)
+        crear = Button(frame, text="Crear", command=self.create_client) 
         crear.configure(state=DISABLED) 
         crear.grid(row=0, column=0) 
-        Button(frame, text="Cancelar", command=self.close).grid(row=0, 
-        column=1) 
+        Button(frame, text="Cancelar", command=self.close).grid(row=0, column=1) 
 
+        # Estado de validaciones y exportar botón
+        self.validaciones = [False, False, False] 
+        self.crear = crear  # <-- Asignar después de definir "crear"
+
+    def dni_valido(dni, lista_clientes):
+        # Validar formato: 2 dígitos + 1 letra mayúscula (ej: "12A")
+        if not re.match(r'^\d{2}[A-Z]$', dni):
+            return False
         
-
-    def create_client(self): 
-        pass 
-
-    def close(self): 
-        self.destroy() 
-        self.update() 
+        # Validar que el DNI no exista en la lista
+        for cliente in lista_clientes:
+            if cliente.dni == dni:
+                return False
+        
+        return True
 
     def validate(self, event, index): 
-        valor = event.widget.get() 
-        # Validar el dni si es el primer campo o textual para los otros dos 
-        valido = helpers.dni_valido(valor, db.Clientes.lista) if index == 0 else (valor.isalpha() and len(valor) >= 2 and len(valor) <= 30) 
+        valor = event.widget.get()
+        
+        # Convertir DNI a mayúsculas
+        if index == 0:
+            valor = valor.upper()
+            event.widget.delete(0, "end")
+            event.widget.insert(0, valor)
+
+        # Validar DNI (index 0) o campos de texto (index 1 y 2)
+        if index == 0:
+            valido = helpers.dni_valido(valor, db.Clientes.lista)
+        else:
+            valido = valor.isalpha() and 2 <= len(valor) <= 30
+        
         event.widget.configure({"bg": "Green" if valido else "Red"}) 
-        # Cambiar estado del botón en base a las validaciones 
         self.validaciones[index] = valido 
-        self.crear.config(state=NORMAL if self.validaciones == [1, 1, 1] else DISABLED)
-    
+        self.crear.config(state=NORMAL if all(self.validaciones) else DISABLED)
+
     def create_client(self): 
-        self.master.treeview.insert( 
-            parent='', index='end', iid=self.dni.get(), 
-            values=(self.dni.get(), self.nombre.get(), 
-        self.apellido.get())) 
+        dni = self.dni.get().upper() 
+        nombre = self.nombre.get().capitalize() 
+        apellido = self.apellido.get().capitalize() 
+        
+        # Añadir a la base de datos 
+        db.Clientes.crear(dni, nombre, apellido)
+        
+        # Actualizar Treeview 
+        self.master.treeview.insert(
+            "", 
+            "end", 
+            iid=dni, 
+            values=(dni, nombre, apellido)
+            )
         self.close()
 
 if __name__ == "__main__":
