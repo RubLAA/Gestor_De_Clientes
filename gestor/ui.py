@@ -77,10 +77,11 @@ class MainWindow(Tk, CenterWidgetMixin):
             confirmar = askokcancel( 
                 title='Confirmación', 
                 message=f'¿Borrar a {campos[1]} {campos[2]}?', 
-                icon= WARNING) 
+                icon=WARNING
+            ) 
             if confirmar: 
-                # remove the row 
-                self.treeview.delete(cliente) 
+                self.treeview.delete(cliente)  # Eliminar de la interfaz
+                db.Clientes.borrar(campos[0])  # Eliminar de la base de datos
     
     def create_client_window(self): 
         CreateClientWindow(self)
