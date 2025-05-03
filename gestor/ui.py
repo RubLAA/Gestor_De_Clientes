@@ -1,5 +1,6 @@
 from tkinter import Tk, Frame, CENTER, NO, Scrollbar, RIGHT, Y
 from tkinter import ttk
+import database as db
 
 class CenterWidgetMixin: 
     def center(self):  # Quita la coma extra
@@ -51,6 +52,15 @@ class MainWindow(Tk, CenterWidgetMixin):
         treeview = ttk.Treeview(frame, yscrollcommand=scrollbar.set) # edited 
         treeview['columns'] = ('DNI', 'Nombre', 'Apellido') 
         treeview.pack() # edited
+
+        # Fill treeview data 
+        for cliente in db.Clientes.lista: 
+            treeview.insert( 
+                parent='', index='end', iid=cliente.dni, 
+                values=(cliente.dni, cliente.nombre, cliente.apellido)) 
+        
+        # Treeview repack with scrollbar 
+        treeview.pack()
 
 if __name__ == "__main__":
     app = MainWindow()
