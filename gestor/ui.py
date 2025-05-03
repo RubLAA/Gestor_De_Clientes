@@ -86,7 +86,8 @@ class MainWindow(Tk, CenterWidgetMixin):
         CreateClientWindow(self)
 
     def edit_client_window(self):
-        EditClientWindow(self)
+        if self.treeview.focus():  # Solo si hay un cliente seleccionado
+            EditClientWindow(self)
 
 class CreateClientWindow(Toplevel, CenterWidgetMixin): 
     def __init__(self, parent): 
@@ -249,11 +250,20 @@ class EditClientWindow(Toplevel, CenterWidgetMixin):
         self.actualizar.config(state=NORMAL if self.validaciones == [1, 1] else DISABLED) 
     
     def update_client(self): 
-        cliente = self.master.treeview.focus() 
-        # Sobreescribimos los datos de la fila seleccionada 
-        self.master.treeview.item( 
-            cliente, values=(self.dni.get(), self.nombre.get(), self.apellido.get())) 
-        self.close() 
+        dni = self.dni.get()
+        nuevo_nombre = self.nombre.get().capitalize()
+        nuevo_apellido = self.apellido.get().capitalize()
+        
+        # Actualizar la base de datos
+        db.Clientes.modificar(dni, nuevo_nombre, nuevo_apellido)  # <-- Nueva línea
+        
+        # Actualizar Treeview
+        cliente = self.master.treeview.focus()
+        self.master.treeview.item(
+            cliente, 
+            values=(dni, nuevo_nombre, nuevo_apellido)
+        )
+        self.close()
     
     def close(self): 
         self.destroy() 
