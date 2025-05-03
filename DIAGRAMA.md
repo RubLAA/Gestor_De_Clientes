@@ -11,7 +11,7 @@ graph TD
     %% Relaciones Adicionales
     D -->|Regex DNI| H[re - Módulo Python]
     F -->|Define Rutas| E
-    G -.->|Alternativa CLI| B
+    G -.->|Alternativa CLI| B  <!-- Corregido aquí: sin espacios extras
 
     %% Estilos
     classDef py fill:#f9f,color:#333;
